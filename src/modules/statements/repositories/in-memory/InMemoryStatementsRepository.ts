@@ -4,6 +4,8 @@ import { IGetBalanceDTO } from "../../useCases/getBalance/IGetBalanceDTO";
 import { IGetStatementOperationDTO } from "../../useCases/getStatementOperation/IGetStatementOperationDTO";
 import { IStatementsRepository } from "../IStatementsRepository";
 
+import { STATEMENT as OPERATION_STATEMENT } from '../../../../config/statement';
+
 export class InMemoryStatementsRepository implements IStatementsRepository {
   private statements: Statement[] = [];
 
@@ -27,8 +29,7 @@ export class InMemoryStatementsRepository implements IStatementsRepository {
   async getUserBalance({ user_id, with_statement = false }: IGetBalanceDTO):
     Promise<
       { balance: number } | { balance: number, statement: Statement[] }
-    >
-  {
+    > {
     const statement = this.statements.filter(operation => operation.user_id === user_id);
 
     const balance = statement.reduce((acc, operation) => {
@@ -47,5 +48,36 @@ export class InMemoryStatementsRepository implements IStatementsRepository {
     }
 
     return { balance }
+  }
+
+  async transfer(from_user_id: string, amount: number, transferDescription: string): Promise<void> {
+
+    const { DEPOSIT } = OPERATION_STATEMENT;
+
+    const userIndex = await this
+      .statements
+      .findIndex(async (user) => user.id === from_user_id);
+
+    const statementUser = await this.statements[userIndex];
+    const { user } = statementUser;
+
+    if (!user.id) {
+
+      return undefined;
+    }
+
+    const statement = await this.create({
+      user_id: user.id,
+      amount: amount,
+      type: DEPOSIT,
+      description: transferDescription
+    });
+
+    user.balance = user.balance + amount;
+    user.statement.push(statement);
+
+    statementUser.type = DEPOSIT;
+    statementUser.description = transferDescription;
+
   }
 }

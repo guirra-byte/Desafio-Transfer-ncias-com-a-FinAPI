@@ -1,7 +1,6 @@
 {
   "username": "postgres",
-  "password": "docker",
-
+  "password": "mabel84816756",
   "name": "default",
   "type": "postgres",
   "host": "localhost",

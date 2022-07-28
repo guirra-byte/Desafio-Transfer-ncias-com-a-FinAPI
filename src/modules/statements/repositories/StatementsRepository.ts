@@ -6,6 +6,8 @@ import { IGetBalanceDTO } from "../useCases/getBalance/IGetBalanceDTO";
 import { IGetStatementOperationDTO } from "../useCases/getStatementOperation/IGetStatementOperationDTO";
 import { IStatementsRepository } from "./IStatementsRepository";
 
+import { STATEMENT as OPERATION_STATEMENT } from '../../../config/statement';
+
 export class StatementsRepository implements IStatementsRepository {
   private repository: Repository<Statement>;
 
@@ -38,8 +40,7 @@ export class StatementsRepository implements IStatementsRepository {
   async getUserBalance({ user_id, with_statement = false }: IGetBalanceDTO):
     Promise<
       { balance: number } | { balance: number, statement: Statement[] }
-    >
-  {
+    > {
     const statement = await this.repository.find({
       where: { user_id }
     });
@@ -60,5 +61,33 @@ export class StatementsRepository implements IStatementsRepository {
     }
 
     return { balance }
+  }
+
+  async transfer(from_user_id: string, amount: number, transferDescription: string): Promise<void> {
+
+    const { DEPOSIT } = OPERATION_STATEMENT;
+
+    let userStatement = await this
+      .repository
+      .findOne({ user_id: from_user_id });
+
+    if (!userStatement || !userStatement.user.id) {
+
+      return undefined;
+    }
+
+    const { id } = userStatement.user;
+
+    const statement = await this.create({
+      user_id: id,
+      amount: amount,
+      type: DEPOSIT,
+      description: transferDescription
+    });
+
+    userStatement.user.balance = (userStatement.user.balance - amount);
+    userStatement.type = DEPOSIT;
+    userStatement.description = transferDescription;
+
   }
 }

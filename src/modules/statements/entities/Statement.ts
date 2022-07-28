@@ -9,11 +9,8 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import { User } from '../../users/entities/User';
+import { STATEMENT } from '../../../config/statement';
 
-enum OperationType {
-  DEPOSIT = 'deposit',
-  WITHDRAW = 'withdraw',
-}
 
 @Entity('statements')
 export class Statement {
@@ -33,8 +30,8 @@ export class Statement {
   @Column('decimal', { precision: 5, scale: 2 })
   amount: number;
 
-  @Column({ type: 'enum', enum: OperationType })
-  type: OperationType;
+  @Column({ type: 'enum', enum: STATEMENT })
+  type: STATEMENT;
 
   @CreateDateColumn()
   created_at: Date;
